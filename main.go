@@ -3727,6 +3727,7 @@ func main() {
 	r.Route("/", func(r chi.Router) {
 		r.Use(statusMiddleware)
 		r.Get("/", index)
+		r.Get("/alerts/{id}", getPublicAlert)
 		r.Get("/resolve", getResolve)
 		r.Get("/cross-auth", getCrossAuth)
 		r.Get("/history", history)
@@ -5540,68 +5541,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 								<span>{{$service.Name}}</span>
 								<span>{{$service.HelperText}}</span>
 							</div>
-							<div>
-								{{if eq (index $.ServiceStatuses $service.ID) "red"}}
-									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#F84B37">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-									</svg>
-								{{else if eq (index $.ServiceStatuses $service.ID) "amber"}}
-									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#E5B773" class="w-6 h-6">
-  										<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-									</svg>
-								{{else}}
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-										<path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-									</svg>
-								{{end}}
-							</div>
 						</div>
 					{{end}}
 				</div>
 
-				{{if len .IncidentAlerts}}
-					<div>
-						<div class="index-alert-container">
-							{{range $alert := .IncidentAlerts}}
-								<div>
-									<div>
-										<div class="index-alert-container__header">
-											<div>
-												{{if eq $alert.Severity "red"}}
-													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F84B37">
-														<path fill-rule="evenodd" d="M5.636 4.575a.75.75 0 0 1 0 1.061 9 9 0 0 0 0 12.728.75.75 0 1 1-1.06 1.06c-4.101-4.1-4.101-10.748 0-14.849a.75.75 0 0 1 1.06 0Zm12.728 0a.75.75 0 0 1 1.06 0c4.101 4.1 4.101 10.75 0 14.85a.75.75 0 1 1-1.06-1.061 9 9 0 0 0 0-12.728.75.75 0 0 1 0-1.06ZM7.757 6.697a.75.75 0 0 1 0 1.06 6 6 0 0 0 0 8.486.75.75 0 0 1-1.06 1.06 7.5 7.5 0 0 1 0-10.606.75.75 0 0 1 1.06 0Zm8.486 0a.75.75 0 0 1 1.06 0 7.5 7.5 0 0 1 0 10.606.75.75 0 0 1-1.06-1.06 6 6 0 0 0 0-8.486.75.75 0 0 1 0-1.06ZM9.879 8.818a.75.75 0 0 1 0 1.06 3 3 0 0 0 0 4.243.75.75 0 1 1-1.061 1.061 4.5 4.5 0 0 1 0-6.364.75.75 0 0 1 1.06 0Zm4.242 0a.75.75 0 0 1 1.061 0 4.5 4.5 0 0 1 0 6.364.75.75 0 0 1-1.06-1.06 3 3 0 0 0 0-4.243.75.75 0 0 1 0-1.061ZM10.875 12a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clip-rule="evenodd" />
-													</svg>
-												{{else if eq $alert.Severity "amber"}}
-													<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#E5B773" class="w-6 h-6">
-														<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-													</svg>
-												{{else}}
-													<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#379BF8">
-														<path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-													</svg>
-												{{end}}
-												<span>{{$alert.Title}}</span>
-											</div>
-											<span>{{$alert.Services}}</span>
-										</div>
-									</div>
-									<div>
-										{{range $message := $alert.Messages}}
-											<div class="index-alert-container__row">
-												<span>{{$message.CreatedAt}}</span>
-												<span>{{$message.Content}}</span>
-											</div>
-										{{end}}
-									</div>
-								</div>
-								<hr>
-							{{end}}
-						</div>
-					</div>
-				{{end}}
-
-				
-				
 				<a class="index-link" href="/history" hx-boost="true">View full history</a>
 				{{if not .Ctx.Auth.ID}}
 					<a class="index-link index-link--secondary" href="/login" hx-boost="true">Manage this page</a>
@@ -5780,6 +5723,155 @@ func index(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		log.Printf("index.Execute: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func getPublicAlert(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("getPublicAlert.Begin: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	alert, err := getAlertByID(tx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		log.Printf("getPublicAlert.getAlertByID: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		log.Printf("getPublicAlert.Commit: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Simple formatting for display
+	serviceNames := make([]string, 0, len(alert.Services))
+	for _, s := range alert.Services {
+		serviceNames = append(serviceNames, s.Name)
+	}
+
+	type ViewMessage struct {
+		ID        int
+		CreatedAt string
+		Content   string
+	}
+
+	msgs := make([]ViewMessage, 0, len(alert.Messages))
+	for _, m := range alert.Messages {
+		createdAt := ""
+		if m.CreatedAt != nil {
+			createdAt = m.CreatedAt.Format("Jan 2 2006 • 15:04 MST")
+			if m.CreatedAt.Year() == time.Now().UTC().Year() {
+				createdAt = m.CreatedAt.Format("Jan 2 • 15:04 MST")
+			}
+		}
+		msgs = append(msgs, ViewMessage{
+			ID:        m.ID,
+			CreatedAt: createdAt,
+			Content:   m.Content,
+		})
+	}
+
+	type ViewAlert struct {
+		ID        int
+		Title     string
+		AlertType string
+		Severity  string
+		CreatedAt string
+		EndedAt   string
+		Messages  []ViewMessage
+		Services  string
+	}
+
+	va := ViewAlert{
+		ID:        alert.ID,
+		Title:     alert.Title,
+		AlertType: alert.AlertType,
+		Severity:  alert.Severity,
+		Messages:  msgs,
+		Services:  strings.Join(serviceNames, " • "),
+	}
+	if alert.CreatedAt != nil {
+		va.CreatedAt = alert.CreatedAt.Format("02/01/2006 15:04 MST")
+	}
+	if alert.EndedAt != nil {
+		va.EndedAt = alert.EndedAt.Format("02/01/2006 15:04 MST")
+	}
+
+	const markup = `
+		{{define "title"}}{{.Alert.Title}} - Alert{{end}}
+		{{define "body"}}
+			<div class="alert-container">
+				<div class="admin-nav-header">
+					<div>
+						<a href="/history" hx-boost="true">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+							</svg>
+						</a>
+						<h2>{{.Alert.Title}}</h2>
+					</div>
+				</div>
+
+				<div class="alert-services">
+					<h2>Affected services</h2>
+					<div>
+						<span>{{.Alert.Services}}</span>
+					</div>
+				</div>
+
+				<div class="alert-container-messages">
+					<div>
+						<h2>Timeline</h2>
+					</div>
+					<div>
+						{{range $message := .Alert.Messages}}
+							<div>
+								<div>
+									<span>{{$message.CreatedAt}}</span>
+								</div>
+								<span>{{$message.Content}}</span>
+							</div>
+						{{end}}
+					</div>
+				</div>
+			</div>
+		{{end}}
+	`
+
+	tmpl, err := parseTmpl("getPublicAlert", markup)
+	if err != nil {
+		log.Printf("getPublicAlert.parseTmpl: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, struct {
+		Alert ViewAlert
+		Ctx   pageCtx
+	}{
+		Alert: va,
+		Ctx:   getPageCtx(r),
+	}); err != nil {
+		log.Printf("getPublicAlert.Execute: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
